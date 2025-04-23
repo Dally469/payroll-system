@@ -1,18 +1,22 @@
 package com.payroll.payroll_system.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class DepartmentDTO {
     private UUID id;
     private String name;
     private String code;
-    private Integer employeeCount;
-
+    private UUID organizationId;
+    private String organizationName;
+    
+    // Getters and setters
     public UUID getId() {
         return id;
     }
@@ -36,12 +40,20 @@ public class DepartmentDTO {
     public void setCode(String code) {
         this.code = code;
     }
-
-    public Integer getEmployeeCount() {
-        return employeeCount;
+    
+    public UUID getOrganizationId() {
+        return organizationId;
     }
-
-    public void setEmployeeCount(Integer employeeCount) {
-        this.employeeCount = employeeCount;
+    
+    public void setOrganizationId(UUID organizationId) {
+        this.organizationId = organizationId;
+    }
+    
+    public String getOrganizationName() {
+        return organizationName;
+    }
+    
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
     }
 }

@@ -18,6 +18,8 @@ public class EmployeeDTO {
     private BigDecimal baseSalary;
     private UUID departmentId;
     private String departmentName;
+    private UUID organizationId;
+    private String organizationName;
 
     public UUID getId() {
         return id;
@@ -81,5 +83,21 @@ public class EmployeeDTO {
 
     public void setDepartmentName(String departmentName) {
         this.departmentName = departmentName;
+    }
+
+    public UUID getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(UUID organizationId) {
+        this.organizationId = organizationId;
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
     }
 }

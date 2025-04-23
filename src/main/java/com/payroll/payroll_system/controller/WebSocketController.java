@@ -58,15 +58,20 @@ import java.util.UUID;
     @MessageMapping("/payroll/generate")
     @SendTo("/topic/payroll")
     public PayrollDTO generatePayroll(PayrollGenerateRequestDTO request) {
+        // Default organization ID to null for WebSocket, this should be handled by a service layer check
+        UUID organizationId = null;
         Optional<PayrollDTO> result = payrollService.generatePayroll(
-                request.getEmployeeId(), request.getStartDate(), request.getEndDate());
+                request.getEmployeeId(), request.getStartDate(), request.getEndDate(), organizationId);
         return result.orElseThrow(() -> new RuntimeException("Employee not found: " + request.getEmployeeId()));
     }
 
     @MessageMapping("/payroll/status-update")
     @SendTo("/topic/payroll")
     public PayrollDTO updatePayrollStatus(PayrollStatusUpdateRequest request) {
-        Optional<PayrollDTO> result = payrollService.updatePayrollStatus(request.getPayrollId(), request.getStatus());
+        // Default organization ID to null for WebSocket, this should be handled by a service layer check
+        UUID organizationId = null;
+        Optional<PayrollDTO> result = payrollService.updatePayrollStatus(
+                request.getPayrollId(), request.getStatus(), organizationId);
         return result.orElseThrow(() -> new RuntimeException("Payroll not found: " + request.getPayrollId()));
     }
 }

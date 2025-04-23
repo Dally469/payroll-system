@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -27,9 +27,9 @@ public class AdvanceRequestDTO {
     private String reason;
     
     @NotNull(message = "Request date is required")
-    private LocalDate requestDate;
+    private LocalDateTime requestDate;
     
     @NotNull(message = "Repayment date is required")
     @FutureOrPresent(message = "Repayment date must be in present or future")
-    private LocalDate repaymentDate;
+    private LocalDateTime repaymentDate;
 } 

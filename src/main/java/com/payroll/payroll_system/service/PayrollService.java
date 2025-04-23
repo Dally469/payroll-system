@@ -7,6 +7,7 @@ import com.payroll.payroll_system.entity.Payroll;
 import com.payroll.payroll_system.repository.ActivityRepository;
 import com.payroll.payroll_system.repository.AttendanceRepository;
 import com.payroll.payroll_system.repository.EmployeeRepository;
+import com.payroll.payroll_system.repository.OrganizationRepository;
 import com.payroll.payroll_system.repository.PayrollRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,8 @@ public class PayrollService {
     private AttendanceRepository attendanceRepository;
     @Autowired
     private ActivityRepository activityRepository;
+    @Autowired
+    private OrganizationRepository organizationRepository;
 
     @Transactional(readOnly = true)
     public List<PayrollDTO> getAllPayrolls() {
@@ -47,9 +50,23 @@ public class PayrollService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<PayrollDTO> getPayrollsByOrganization(UUID organizationId) {
+        return payrollRepository.findByEmployeeOrganizationId(organizationId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PayrollDTO> getPayrollsByEmployeeIdAndOrganization(UUID employeeId, UUID organizationId) {
+        return payrollRepository.findByEmployeeIdAndEmployeeOrganizationId(employeeId, organizationId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
-    public Optional<PayrollDTO> generatePayroll(UUID employeeId, LocalDate startDate, LocalDate endDate) {
-        return employeeRepository.findById(employeeId)
+    public Optional<PayrollDTO> generatePayroll(UUID employeeId, LocalDate startDate, LocalDate endDate, UUID organizationId) {
+        return employeeRepository.findByIdAndOrganizationId(employeeId, organizationId)
                 .map(employee -> {
                     // Calculate working hours
                     LocalDateTime startDateTime = startDate.atStartOfDay();
@@ -92,8 +109,8 @@ public class PayrollService {
     }
 
     @Transactional
-    public Optional<PayrollDTO> updatePayrollStatus(UUID payrollId, PayrollStatus status) {
-        return payrollRepository.findById(payrollId)
+    public Optional<PayrollDTO> updatePayrollStatus(UUID payrollId, PayrollStatus status, UUID organizationId) {
+        return payrollRepository.findByIdAndEmployeeOrganizationId(payrollId, organizationId)
                 .map(payroll -> {
                     payroll.setStatus(status);
                     return convertToDTO(payrollRepository.save(payroll));

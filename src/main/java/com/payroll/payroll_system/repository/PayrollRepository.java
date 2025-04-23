@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -17,4 +18,10 @@ public interface PayrollRepository extends JpaRepository<Payroll, UUID> {
             LocalDate start, LocalDate end);
 
     List<Payroll> findByStatus(PayrollStatus status);
+
+    List<Payroll> findByEmployeeOrganizationId(UUID organizationId);
+
+    List<Payroll> findByEmployeeIdAndEmployeeOrganizationId(UUID employeeId, UUID organizationId);
+
+    Optional<Payroll> findByIdAndEmployeeOrganizationId(UUID id, UUID organizationId);
 }

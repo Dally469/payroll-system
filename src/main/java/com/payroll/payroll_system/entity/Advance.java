@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -45,10 +44,10 @@ public class Advance {
     private LocalDateTime approvalDate;
     
     @Column(nullable = false)
-    private LocalDate requestDate;
+    private LocalDateTime requestDate;
     
     @Column(nullable = false)
-    private LocalDate repaymentDate;
+    private LocalDateTime repaymentDate;
     
     private boolean fullyRepaid;
     

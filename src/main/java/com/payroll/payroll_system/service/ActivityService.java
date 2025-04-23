@@ -15,11 +15,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 @Service
-@RequiredArgsConstructor
 public class ActivityService {
     @Autowired
     private ActivityRepository activityRepository;
+    
     @Autowired
     private EmployeeRepository employeeRepository;
 
@@ -52,6 +53,45 @@ public class ActivityService {
                 });
     }
 
+    public List<ActivityDTO> getActivitiesByOrganization(UUID organizationId) {
+        return activityRepository.findByEmployeeOrganizationId(organizationId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<ActivityDTO> getActivitiesByEmployeeIdAndOrganization(UUID employeeId, UUID organizationId) {
+        return activityRepository.findByEmployeeIdAndEmployeeOrganizationId(employeeId, organizationId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public Optional<ActivityDTO> startActivityForOrganization(UUID employeeId, ActivityCreateDTO activityDTO, UUID organizationId) {
+        return employeeRepository.findByIdAndOrganizationId(employeeId, organizationId)
+                .map(employee -> {
+                    Activity activity = createActivityFromDTO(activityDTO);
+                    activity.setEmployee(employee);
+                    activity.setStartTime(LocalDateTime.now());
+                    Activity savedActivity = activityRepository.save(activity);
+                    return convertToDTO(savedActivity);
+                });
+    }
+
+    public Optional<ActivityDTO> endActivityForOrganization(UUID activityId, UUID organizationId) {
+        return activityRepository.findByIdAndEmployeeOrganizationId(activityId, organizationId)
+                .map(activity -> {
+                    activity.setEndTime(LocalDateTime.now());
+                    Activity updatedActivity = activityRepository.save(activity);
+                    return convertToDTO(updatedActivity);
+                });
+    }
+    
+    private Activity createActivityFromDTO(ActivityCreateDTO dto) {
+        Activity activity = new Activity();
+        activity.setDescription(dto.getDescription());
+        activity.setType(dto.getType());
+        return activity;
+    }
+
     private ActivityDTO convertToDTO(Activity activity) {
         ActivityDTO activityDTO = new ActivityDTO();
         activityDTO.setId(activity.getId());
@@ -62,6 +102,6 @@ public class ActivityService {
         activityDTO.setEndTime(activity.getEndTime());
         activityDTO.setDurationInMinutes(activity.getDurationInMinutes());
 
-        return  activityDTO;
-     }
+        return activityDTO;
+    }
 }

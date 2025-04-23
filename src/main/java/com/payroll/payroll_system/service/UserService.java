@@ -6,8 +6,8 @@ import com.payroll.payroll_system.repository.OrganizationRepository;
 import com.payroll.payroll_system.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,7 +21,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
@@ -31,6 +30,17 @@ public class UserService implements UserDetailsService {
     
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
+    
+    public UserService(
+            UserRepository userRepository,
+            OrganizationRepository organizationRepository,
+            @Lazy PasswordEncoder passwordEncoder,
+            EmailService emailService) {
+        this.userRepository = userRepository;
+        this.organizationRepository = organizationRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+    }
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -17,4 +18,10 @@ public interface ActivityRepository extends JpaRepository<Activity, UUID> {
             UUID employeeId, LocalDateTime start, LocalDateTime end);
 
     List<Activity> findByEmployeeIdAndType(UUID employeeId, ActivityType type);
+
+    List<Activity> findByEmployeeOrganizationId(UUID organizationId);
+
+    List<Activity> findByEmployeeIdAndEmployeeOrganizationId(UUID employeeId, UUID organizationId);
+
+    Optional<Activity> findByIdAndEmployeeOrganizationId(UUID activityId, UUID organizationId);
 }

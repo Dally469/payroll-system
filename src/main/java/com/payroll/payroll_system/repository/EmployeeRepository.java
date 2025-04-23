@@ -28,4 +28,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
     Optional<Employee> findByDocumentId(String documentId);
     boolean existsByEmail(String email);
     boolean existsByDocumentId(String documentId);
+    Optional<Employee> findByIdAndOrganizationId(UUID id, UUID organizationId);
 }
