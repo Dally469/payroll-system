@@ -1,52 +1,109 @@
 package com.payroll.payroll_system.controller;
 
-
+import com.payroll.payroll_system.dto.ApiResponse;
 import com.payroll.payroll_system.dto.EmployeeDTO;
+import com.payroll.payroll_system.entity.User;
 import com.payroll.payroll_system.service.EmployeeService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.payroll.payroll_system.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/employees")
- public class EmployeeController {
-    @Autowired
-    private EmployeeService employeeService;
+@RequiredArgsConstructor
+public class EmployeeController {
+    private final EmployeeService employeeService;
+    private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
-        return ResponseEntity.ok(employeeService.getAllEmployees());
+    public ResponseEntity<ApiResponse<List<EmployeeDTO>>> getEmployeesByOrganization(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userService.getCurrentUser(userDetails.getUsername());
+        if (currentUser.getOrganization() == null) {
+            return ResponseEntity.ok(ApiResponse.success(List.of(), "No organization assigned"));
+        }
+        List<EmployeeDTO> employees = employeeService.getEmployeesByOrganization(currentUser.getOrganization().getId());
+        return ResponseEntity.ok(ApiResponse.success(employees, "Employees retrieved successfully"));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable UUID id) {
-        return employeeService.getEmployeeById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<EmployeeDTO>> getEmployeeById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userService.getCurrentUser(userDetails.getUsername());
+        if (currentUser.getOrganization() == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access denied, no organization assigned"));
+        }
+        
+        return employeeService.getEmployeeByIdAndOrganization(id, currentUser.getOrganization().getId())
+                .map(employee -> ResponseEntity.ok(ApiResponse.success(employee, "Employee retrieved successfully")))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Employee not found")));
     }
 
     @PostMapping
-    public ResponseEntity<EmployeeDTO> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    public ResponseEntity<ApiResponse<EmployeeDTO>> createEmployee(
+            @RequestBody EmployeeDTO employeeDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userService.getCurrentUser(userDetails.getUsername());
+        if (currentUser.getOrganization() == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access denied, no organization assigned"));
+        }
+        
+        employeeDTO.setOrganizationId(currentUser.getOrganization().getId());
+        EmployeeDTO createdEmployee = employeeService.createEmployee(employeeDTO);
+        
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(employeeService.createEmployee(employeeDTO));
+                .body(ApiResponse.success(createdEmployee, "Employee created successfully"));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable UUID id, @RequestBody EmployeeDTO employeeDTO) {
-        return employeeService.updateEmployee(id, employeeDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER')")
+    public ResponseEntity<ApiResponse<EmployeeDTO>> updateEmployee(
+            @PathVariable UUID id,
+            @RequestBody EmployeeDTO employeeDTO,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userService.getCurrentUser(userDetails.getUsername());
+        if (currentUser.getOrganization() == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access denied, no organization assigned"));
+        }
+        
+        return employeeService.updateEmployeeForOrganization(id, employeeDTO, currentUser.getOrganization().getId())
+                .map(updatedEmployee -> ResponseEntity.ok(ApiResponse.success(updatedEmployee, "Employee updated successfully")))
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Employee not found")));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmployee(@PathVariable UUID id) {
-        return employeeService.deleteEmployee(id)
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.notFound().build();
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteEmployee(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userService.getCurrentUser(userDetails.getUsername());
+        if (currentUser.getOrganization() == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access denied, no organization assigned"));
+        }
+        
+        boolean deleted = employeeService.deleteEmployeeForOrganization(id, currentUser.getOrganization().getId());
+        
+        if (deleted) {
+            return ResponseEntity.ok(ApiResponse.success(null, "Employee deleted successfully"));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee not found"));
+        }
     }
 }
